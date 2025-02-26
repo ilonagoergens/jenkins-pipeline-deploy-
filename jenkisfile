@@ -1,0 +1,47 @@
+pipeline {
+    agent any
+    environment {
+        EC2_HOST = '3.79.117.124'
+        EC2_USER = 'ubuntu'
+        DEPLOY_PATH = '/home/ubuntu/app2'
+        SSH_KEY_ID = 'jenkins-ec2-key'
+    }
+    stages {
+        stage('Clone Repo') {
+            steps {
+                git 'https://github.com/ilonagoergens/my-react-app.git'
+            }
+        }
+        stage('Install Node') {
+            steps {
+                sh '''
+                curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+                sudo apt-get install -y nodejs
+                '''
+            }
+        }
+        stage('Install Dependencies') {
+            steps {
+                sh 'npm install'
+            }
+        }
+        stage('Build App') {
+            steps {
+                sh 'npm run build'
+            }
+        }
+        stage('Deploy to EC2') {
+            steps {
+                sshagent([SSH_KEY_ID]) {
+                    // Kopiere alle Dateien nach EC2
+                    sh "scp -r dist/* ${EC2_USER}@${EC2_HOST}:${DEPLOY_PATH}/"
+                    
+                    // Installiere nginx auf dem EC2-Server, falls nicht vorhanden
+                    sh "ssh ${EC2_USER}@${EC2_HOST} 'sudo apt-get update && sudo apt-get install -y nginx'"
+                    
+                    // Starte den nginx-Dienst neu
+                    sh "ssh ${EC2_USER}@${EC2_HOST} 'sudo systemctl restart nginx'"
+                }
+            }
+        }
+    }
