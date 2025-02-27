@@ -1,4 +1,4 @@
-pipeline {
+ pipeline {
     agent any
     environment {
         EC2_HOST = '3.79.117.124'
@@ -34,7 +34,7 @@ pipeline {
             steps {
                 sshagent([SSH_KEY_ID]) {
                     // Kopiere alle Dateien nach EC2
-                    sh "scp -r dist/* ${EC2_USER}@${EC2_HOST}:${DEPLOY_PATH}/"
+                    sh "scp -r /* ${EC2_USER}@${EC2_HOST}:${DEPLOY_PATH}/"
                     
                     // Installiere nginx auf dem EC2-Server, falls nicht vorhanden
                     sh "ssh ${EC2_USER}@${EC2_HOST} 'sudo apt-get update && sudo apt-get install -y nginx'"
